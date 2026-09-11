@@ -1,0 +1,43 @@
+#version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: matrix_user
+      POSTGRES_PASSWORD: matrix_pass
+      POSTGRES_DB: matrix_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  server:
+    build: ./server
+    ports:
+      - "8008:8008"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: matrix_user
+      DB_PASS: matrix_pass
+      DB_NAME: matrix_db
+      REDIS_ADDR: redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  client:
+    build: ./client-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
